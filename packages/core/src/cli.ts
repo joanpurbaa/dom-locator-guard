@@ -10,6 +10,7 @@ import {
 	formatConsole,
 	formatHTML,
 } from "./index";
+import { detectFileType } from "./snapshot/source-locator";
 
 const VERSION = "0.2.0";
 const args = process.argv.slice(2);
@@ -32,10 +33,23 @@ function slugify(name: string) {
 function featureName(file: string) {
 	return path.basename(file, path.extname(file));
 }
-function makeSnapshot(html: string, feat: string, url: string) {
-	const tree = parseHTML(html);
+
+function makeSnapshot(source: string, feat: string, url: string) {
+	const fileType = detectFileType(url);
+	let html = source;
+	if (fileType === "jsx" || fileType === "tsx") {
+		html =
+			"<body>" +
+			source
+				.replace(/className=/g, "class=")
+				.replace(/\{[^}]*\}/g, '"__expr__"')
+				.replace(/<>/g, "<div>")
+				.replace(/<\/>/g, "</div>") +
+			"</body>";
+	}
+	const tree = parseHTML(html, source);
 	if (!tree) {
-		console.error(`❌ Gagal parse: ${url}`);
+		console.error("Gagal parse: " + url);
 		process.exit(1);
 	}
 	return {

@@ -20,31 +20,44 @@ export interface TrackedLocators {
   classNames: string[];
 }
 
+export interface SourceLocation {
+	line: number;
+	column: number;
+	snippet: string;
+	context: {
+		before: string[];
+		line: string;
+		after: string[];
+	};
+}
+
 // ── Normalized DOM node ────────────────────────────────────────────────────
 
 export interface NormalizedNode {
-  /** Tag name in lowercase, e.g. "button", "input" */
-  tagName: string;
-  /** Trimmed innerText / textContent */
-  textContent: string;
-  /** All HTML attributes as key-value */
-  attributes: Record<string, string>;
-  /** Parsed locator-relevant attributes */
-  locators: TrackedLocators;
-  /** CSS selector path from root, e.g. "body > main > form > button:nth-child(1)" */
-  domPath: string;
-  /** Absolute XPath */
-  xpath: string;
-  /** Bounding box — populated when captured from live browser */
-  visualPosition?: BoundingBox;
-  /** Depth in DOM tree from body */
-  depth: number;
-  /** Index among siblings with same tagName */
-  siblingIndex: number;
-  /** SHA-256 hash of stable properties (tagName + textContent + domPath) */
-  fingerprint: string;
-  /** Recursive children */
-  children: NormalizedNode[];
+	/** Tag name in lowercase, e.g. "button", "input" */
+	tagName: string;
+	/** Trimmed innerText / textContent */
+	textContent: string;
+	/** All HTML attributes as key-value */
+	attributes: Record<string, string>;
+	/** Parsed locator-relevant attributes */
+	locators: TrackedLocators;
+	/** CSS selector path from root, e.g. "body > main > form > button:nth-child(1)" */
+	domPath: string;
+	/** Absolute XPath */
+	xpath: string;
+	/** Bounding box — populated when captured from live browser */
+	visualPosition?: BoundingBox;
+	/** Depth in DOM tree from body */
+	depth: number;
+	/** Index among siblings with same tagName */
+	siblingIndex: number;
+	/** SHA-256 hash of stable properties (tagName + textContent + domPath) */
+	fingerprint: string;
+	/** Recursive children */
+	children: NormalizedNode[];
+	suggestedLocator?: SuggestedLocator;
+	sourceLocation?: SourceLocation;
 }
 
 export interface BoundingBox {
@@ -117,18 +130,19 @@ export interface SimilaritySignals {
 }
 
 export interface ElementDiff {
-  /** Human-readable label dari textContent atau tagName */
-  elementLabel: string;
-  verdict: ElementVerdict;
-  /** Confidence bahwa ini adalah elemen yang sama secara fungsional (0-100) */
-  confidenceScore: number;
-  signals: SimilaritySignals;
-  /** Locator changes — hanya diisi jika verdict === 'locator_changed' */
-  locatorChanges: LocatorChange[];
-  baselineNode?: NormalizedNode;
-  currentNode?: NormalizedNode;
-  /** Suggested replacement locator */
-  suggestedLocator?: SuggestedLocator;
+	/** Human-readable label dari textContent atau tagName */
+	elementLabel: string;
+	verdict: ElementVerdict;
+	/** Confidence bahwa ini adalah elemen yang sama secara fungsional (0-100) */
+	confidenceScore: number;
+	signals: SimilaritySignals;
+	/** Locator changes — hanya diisi jika verdict === 'locator_changed' */
+	locatorChanges: LocatorChange[];
+	baselineNode?: NormalizedNode;
+	currentNode?: NormalizedNode;
+	/** Suggested replacement locator */
+	suggestedLocator?: SuggestedLocator;
+	sourceLocation?: SourceLocation;
 }
 
 export interface SuggestedLocator {

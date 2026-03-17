@@ -1,6 +1,6 @@
 {
 	"name": "dom-locator-guard",
-	"version": "0.2.5",
+	"version": "0.2.7",
 	"description": "Core engine: snapshot, diff, similarity scoring, report",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
