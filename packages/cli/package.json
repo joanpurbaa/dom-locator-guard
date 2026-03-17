@@ -1,0 +1,25 @@
+{
+  "name": "@dom-locator-guard/cli",
+  "version": "0.1.0",
+  "description": "CLI for offline DOM snapshot comparison",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "bin": {
+    "locator-guard": "./dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@dom-locator-guard/core": "*",
+    "commander": "^12.0.0",
+    "chalk": "^4.1.2",
+    "ora": "^5.4.1",
+    "glob": "^10.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.4.0"
+  }
+}

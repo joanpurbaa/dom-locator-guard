@@ -1,0 +1,21 @@
+{
+  "name": "dom-locator-guard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "DOM locator change detection for QA automation",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "dev:core": "pnpm --filter @dom-locator-guard/core dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

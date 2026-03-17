@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+coverage/
+
+# Baseline & reports (generated files — setiap user punya sendiri)
+locator-guard-baselines/
+locator-guard-reports/
+demo/reports/
+demo/walkthrough/reports/
+demo/baselines/
+
+# Backup files dari SnapshotStore
+*.backup-*.json
+
+# NPM
+*.tgz
+.npmrc
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Logs
+*.log
+npm-debug.log*

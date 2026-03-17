@@ -1,0 +1,12 @@
+{
+  "name": "@dom-locator-guard/dashboard",
+  "version": "0.1.0",
+  "description": "Web dashboard for DOM Locator Guard",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@dom-locator-guard/core": "file:../packages/core"
+  }
+}

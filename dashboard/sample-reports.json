@@ -1,0 +1,260 @@
+[
+  {
+    "runId": "run-001",
+    "featureName": "Login",
+    "pageUrl": "/login",
+    "generatedAt": 1773690528495,
+    "status": "warning",
+    "totalElements": 24,
+    "changedCount": 1,
+    "addedCount": 0,
+    "removedCount": 0,
+    "summary": "⚠ [Login] 1 locator change(s) detected",
+    "meta": {
+      "baselineTimestamp": 1773607728495,
+      "currentTimestamp": 1773690528495
+    },
+    "diffs": [
+      {
+        "elementLabel": "<button> \"Login\"",
+        "verdict": "locator_changed",
+        "confidenceScore": 92,
+        "signals": {
+          "domPath": 1,
+          "textContent": 1,
+          "tagAndType": 1,
+          "visualPosition": 0.5,
+          "ariaRole": 1
+        },
+        "locatorChanges": [
+          {
+            "attribute": "id",
+            "previous": "loginbtn",
+            "current": "loginBtn",
+            "severity": "high",
+            "severityReason": "ID is commonly used as a locator"
+          }
+        ],
+        "suggestedLocator": {
+          "selector": "[data-testid=\"login-button\"]",
+          "reason": "data-testid is most stable",
+          "priority": 1
+        }
+      }
+    ]
+  },
+  {
+    "runId": "run-002",
+    "featureName": "Checkout",
+    "pageUrl": "/checkout",
+    "generatedAt": 1773686928495,
+    "status": "error",
+    "totalElements": 41,
+    "changedCount": 3,
+    "addedCount": 1,
+    "removedCount": 1,
+    "summary": "⚠ [Checkout] 3 locator change(s) detected",
+    "meta": {
+      "baselineTimestamp": 1773521328495,
+      "currentTimestamp": 1773686928495
+    },
+    "diffs": [
+      {
+        "elementLabel": "<button> \"Place Order\"",
+        "verdict": "locator_changed",
+        "confidenceScore": 88,
+        "signals": {
+          "domPath": 0.9,
+          "textContent": 1,
+          "tagAndType": 1,
+          "visualPosition": 0.85,
+          "ariaRole": 0
+        },
+        "locatorChanges": [
+          {
+            "attribute": "dataTestId",
+            "previous": "place-order-btn",
+            "current": "checkout-submit",
+            "severity": "critical",
+            "severityReason": "data-testid is primary automation locator"
+          }
+        ],
+        "suggestedLocator": {
+          "selector": "[data-testid=\"checkout-submit\"]",
+          "reason": "Update to new data-testid",
+          "priority": 1
+        }
+      },
+      {
+        "elementLabel": "<input> [placeholder=\"Card number\"]",
+        "verdict": "locator_changed",
+        "confidenceScore": 95,
+        "signals": {
+          "domPath": 1,
+          "textContent": 0,
+          "tagAndType": 1,
+          "visualPosition": 0.9,
+          "ariaRole": 0
+        },
+        "locatorChanges": [
+          {
+            "attribute": "id",
+            "previous": "card-number",
+            "current": "cardNumber",
+            "severity": "high",
+            "severityReason": ""
+          },
+          {
+            "attribute": "name",
+            "previous": "card_number",
+            "current": "cardNumber",
+            "severity": "high",
+            "severityReason": ""
+          }
+        ],
+        "suggestedLocator": {
+          "selector": "[placeholder=\"Card number\"]",
+          "reason": "Placeholder is stable here",
+          "priority": 4
+        }
+      },
+      {
+        "elementLabel": "<select> \"Country\"",
+        "verdict": "locator_changed",
+        "confidenceScore": 79,
+        "signals": {
+          "domPath": 0.8,
+          "textContent": 1,
+          "tagAndType": 1,
+          "visualPosition": 0.7,
+          "ariaRole": 0
+        },
+        "locatorChanges": [
+          {
+            "attribute": "class",
+            "previous": "select-country",
+            "current": "country-select form-select",
+            "severity": "medium",
+            "severityReason": "",
+            "removedValues": [
+              "select-country"
+            ],
+            "addedValues": [
+              "country-select",
+              "form-select"
+            ]
+          }
+        ],
+        "suggestedLocator": {
+          "selector": "[name=\"country\"]",
+          "reason": "name attribute is stable",
+          "priority": 3
+        }
+      }
+    ]
+  },
+  {
+    "runId": "run-003",
+    "featureName": "Registration",
+    "pageUrl": "/register",
+    "generatedAt": 1773683328495,
+    "status": "clean",
+    "totalElements": 18,
+    "changedCount": 0,
+    "addedCount": 0,
+    "removedCount": 0,
+    "summary": "✓ [Registration] All locators stable",
+    "meta": {
+      "baselineTimestamp": 1773434928495,
+      "currentTimestamp": 1773683328495
+    },
+    "diffs": []
+  },
+  {
+    "runId": "run-004",
+    "featureName": "Dashboard",
+    "pageUrl": "/dashboard",
+    "generatedAt": 1773679728495,
+    "status": "warning",
+    "totalElements": 67,
+    "changedCount": 2,
+    "addedCount": 3,
+    "removedCount": 0,
+    "summary": "⚠ [Dashboard] 2 locator change(s) detected",
+    "meta": {
+      "baselineTimestamp": 1773348528495,
+      "currentTimestamp": 1773679728495
+    },
+    "diffs": [
+      {
+        "elementLabel": "<button> \"Export\"",
+        "verdict": "locator_changed",
+        "confidenceScore": 84,
+        "signals": {
+          "domPath": 0.85,
+          "textContent": 1,
+          "tagAndType": 1,
+          "visualPosition": 0.8,
+          "ariaRole": 0
+        },
+        "locatorChanges": [
+          {
+            "attribute": "id",
+            "previous": "export-btn",
+            "current": "btn-export-data",
+            "severity": "high",
+            "severityReason": ""
+          }
+        ],
+        "suggestedLocator": {
+          "selector": "text=\"Export\"",
+          "reason": "Text is stable for this button",
+          "priority": 5
+        }
+      },
+      {
+        "elementLabel": "<input> [placeholder=\"Search...\"]",
+        "verdict": "locator_changed",
+        "confidenceScore": 91,
+        "signals": {
+          "domPath": 0.95,
+          "textContent": 0,
+          "tagAndType": 1,
+          "visualPosition": 0.9,
+          "ariaRole": 0
+        },
+        "locatorChanges": [
+          {
+            "attribute": "id",
+            "previous": "search",
+            "current": "global-search",
+            "severity": "high",
+            "severityReason": ""
+          }
+        ],
+        "suggestedLocator": {
+          "selector": "[placeholder=\"Search...\"]",
+          "reason": "Placeholder is stable here",
+          "priority": 4
+        }
+      }
+    ]
+  },
+  {
+    "runId": "run-005",
+    "featureName": "Profile Settings",
+    "pageUrl": "/settings/profile",
+    "generatedAt": 1773676128495,
+    "status": "clean",
+    "totalElements": 31,
+    "changedCount": 0,
+    "addedCount": 0,
+    "removedCount": 0,
+    "summary": "✓ [Profile Settings] All locators stable",
+    "meta": {
+      "baselineTimestamp": 1773262128495,
+      "currentTimestamp": 1773676128495
+    },
+    "diffs": []
+  }
+]

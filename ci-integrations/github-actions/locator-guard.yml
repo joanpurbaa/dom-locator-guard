@@ -1,0 +1,243 @@
+# ─────────────────────────────────────────────────────────────────────────
+#  .github/workflows/locator-guard.yml
+#
+#  Workflow ini berjalan setiap PR yang menyentuh file HTML/template.
+#  Cara kerja:
+#  1. Checkout baseline branch (main/master)
+#  2. Checkout PR branch
+#  3. Jalankan locator-guard diff pada setiap page yang berubah
+#  4. Post comment ke PR dengan summary perubahan locator
+#
+#  Setup:
+#  - Tidak butuh secret khusus (pakai GITHUB_TOKEN bawaan)
+#  - Pastikan baseline sudah tersimpan di repo (./locator-guard-baselines/)
+#  - Atau gunakan step "capture baselines" untuk generate dari main branch
+# ─────────────────────────────────────────────────────────────────────────
+
+name: Locator Guard — PR Check
+
+on:
+  pull_request:
+    branches: [main, master, develop]
+    paths:
+      # Trigger hanya jika ada perubahan di file HTML, templates, atau komponen
+      - '**/*.html'
+      - '**/templates/**'
+      - '**/components/**/*.tsx'
+      - '**/components/**/*.jsx'
+      - '**/components/**/*.vue'
+      - '**/pages/**'
+
+jobs:
+  locator-guard:
+    name: Check locator changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write   # Untuk post PR comment
+
+    steps:
+      # ── 1. Checkout PR branch ──────────────────────────────────────────
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # ── 2. Setup Node.js ───────────────────────────────────────────────
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      # ── 3. Install dependencies ────────────────────────────────────────
+      - name: Install dependencies
+        run: npm ci
+
+      # ── 4. Build locator-guard ─────────────────────────────────────────
+      - name: Build locator-guard
+        run: npx tsc -p packages/core/tsconfig.json
+
+      # ── 5. Get list of changed HTML files ─────────────────────────────
+      - name: Get changed HTML files
+        id: changed-files
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E '\.(html|htm)$' || true)
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGED" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "count=$(echo "$CHANGED" | grep -c . || echo 0)" >> $GITHUB_OUTPUT
+
+      # ── 6. Capture baselines from base branch ─────────────────────────
+      #  Checkout file HTML versi base branch sebagai "baseline"
+      - name: Capture baselines from base branch
+        if: steps.changed-files.outputs.count != '0'
+        run: |
+          mkdir -p /tmp/baselines /tmp/current /tmp/reports
+
+          # Untuk setiap file HTML yang berubah, ambil versi dari base branch
+          while IFS= read -r file; do
+            if [ -n "$file" ]; then
+              feature=$(echo "$file" | sed 's/[\/.]/-/g')
+
+              # Versi base branch
+              git show origin/${{ github.base_ref }}:"$file" > /tmp/baselines/${feature}.html 2>/dev/null || true
+
+              # Versi PR (current)
+              cp "$file" /tmp/current/${feature}.html 2>/dev/null || true
+
+              echo "Prepared: $file → $feature"
+            fi
+          done <<< "${{ steps.changed-files.outputs.files }}"
+
+      # ── 7. Run locator-guard diff ──────────────────────────────────────
+      - name: Run locator-guard diff
+        if: steps.changed-files.outputs.count != '0'
+        id: guard-diff
+        run: |
+          REPORT_FILE="/tmp/reports/summary.md"
+          echo "# 🛡 Locator Guard Report" > $REPORT_FILE
+          echo "" >> $REPORT_FILE
+          echo "**PR:** #${{ github.event.number }} | **Branch:** \`${{ github.head_ref }}\`" >> $REPORT_FILE
+          echo "" >> $REPORT_FILE
+
+          TOTAL_CHANGES=0
+          TOTAL_CRITICAL=0
+
+          while IFS= read -r file; do
+            if [ -n "$file" ]; then
+              feature=$(echo "$file" | sed 's/[\/.]/-/g')
+              baseline="/tmp/baselines/${feature}.html"
+              current="/tmp/current/${feature}.html"
+
+              if [ -f "$baseline" ] && [ -f "$current" ]; then
+                echo "Diffing: $file"
+
+                # Run diff, capture output
+                node -e "
+                  const { parseHTML, buildIndex, diffSnapshots, generateReport } = require('./packages/core/dist/index.js');
+                  const fs = require('fs');
+
+                  const baselineHtml = fs.readFileSync('$baseline', 'utf-8');
+                  const currentHtml = fs.readFileSync('$current', 'utf-8');
+
+                  const baselineTree = parseHTML(baselineHtml);
+                  const currentTree = parseHTML(currentHtml);
+
+                  if (!baselineTree || !currentTree) process.exit(0);
+
+                  const baseline = { featureName: '$file', url: '$file', timestamp: Date.now(), guardVersion: '0.1.0', tree: baselineTree, index: buildIndex(baselineTree) };
+                  const current = { featureName: '$file', url: '$file', timestamp: Date.now(), guardVersion: '0.1.0', tree: currentTree, index: buildIndex(currentTree) };
+
+                  const diffs = diffSnapshots(baseline, current);
+                  const report = require('./packages/core/dist/report/generator.js');
+
+                  fs.writeFileSync('/tmp/reports/${feature}.json', JSON.stringify({ diffs, changedCount: diffs.filter(d => d.verdict === 'locator_changed').length }));
+                " 2>/dev/null || true
+
+                # Parse results dan append ke markdown
+                if [ -f "/tmp/reports/${feature}.json" ]; then
+                  CHANGES=$(node -e "const r = require('/tmp/reports/${feature}.json'); console.log(r.changedCount);" 2>/dev/null || echo 0)
+                  TOTAL_CHANGES=$((TOTAL_CHANGES + CHANGES))
+
+                  if [ "$CHANGES" -gt 0 ]; then
+                    echo "## ⚠ \`$file\`" >> $REPORT_FILE
+                    echo "" >> $REPORT_FILE
+                    echo "**$CHANGES locator change(s) detected**" >> $REPORT_FILE
+                    echo "" >> $REPORT_FILE
+                    echo "<details><summary>View details</summary>" >> $REPORT_FILE
+                    echo "" >> $REPORT_FILE
+                    node -e "
+                      const r = require('/tmp/reports/${feature}.json');
+                      const changed = r.diffs.filter(d => d.verdict === 'locator_changed');
+                      for (const d of changed) {
+                        console.log('**Element:** ' + d.elementLabel);
+                        for (const c of d.locatorChanges) {
+                          console.log('- \`' + c.attribute + '\`: \`' + c.previous + '\` → \`' + c.current + '\` (' + c.severity + ')');
+                        }
+                        console.log('- Confidence: ' + d.confidenceScore + '%');
+                        if (d.suggestedLocator) {
+                          console.log('- Suggested: \`' + d.suggestedLocator.selector + '\`');
+                        }
+                        console.log('');
+                      }
+                    " 2>/dev/null >> $REPORT_FILE || true
+                    echo "</details>" >> $REPORT_FILE
+                    echo "" >> $REPORT_FILE
+                  else
+                    echo "## ✅ \`$file\`" >> $REPORT_FILE
+                    echo "No locator changes detected." >> $REPORT_FILE
+                    echo "" >> $REPORT_FILE
+                  fi
+                fi
+              fi
+            fi
+          done <<< "${{ steps.changed-files.outputs.files }}"
+
+          # Footer summary
+          echo "---" >> $REPORT_FILE
+          echo "**Total locator changes:** $TOTAL_CHANGES" >> $REPORT_FILE
+          echo "total_changes=$TOTAL_CHANGES" >> $GITHUB_OUTPUT
+
+          cat $REPORT_FILE
+
+      # ── 8. Post PR comment ─────────────────────────────────────────────
+      - name: Post locator guard report as PR comment
+        if: steps.changed-files.outputs.count != '0'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const reportPath = '/tmp/reports/summary.md';
+
+            if (!fs.existsSync(reportPath)) return;
+
+            const body = fs.readFileSync(reportPath, 'utf-8');
+            const totalChanges = parseInt('${{ steps.guard-diff.outputs.total_changes }}' || '0');
+
+            // Cari komentar sebelumnya dari bot ini dan update, atau buat baru
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existing = comments.find(c =>
+              c.user?.login === 'github-actions[bot]' &&
+              c.body?.includes('🛡 Locator Guard Report')
+            );
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body,
+              });
+            }
+
+      # ── 9. Upload HTML reports sebagai artifacts ───────────────────────
+      - name: Upload locator reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: locator-guard-reports-${{ github.run_number }}
+          path: /tmp/reports/
+          retention-days: 30
+
+      # ── 10. Fail job jika ada critical changes (opsional) ─────────────
+      #  Uncomment block ini jika ingin block merge saat ada critical changes
+      # - name: Fail on critical locator changes
+      #   if: steps.guard-diff.outputs.total_changes != '0'
+      #   run: |
+      #     echo "⚠ Locator changes detected. Review the PR comment for details."
+      #     echo "This is a WARNING only — the build is not blocked."
+      #     # Untuk block merge: exit 1
