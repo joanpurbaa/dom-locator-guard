@@ -1,9 +1,12 @@
 {
 	"name": "dom-locator-guard",
-	"version": "0.1.1",
+	"version": "0.2.3",
 	"description": "Core engine: snapshot, diff, similarity scoring, report",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
+	"bin": {
+		"dlg": "./dist/cli.js"
+	},
 	"scripts": {
 		"build": "tsc",
 		"dev": "tsc --watch",

@@ -1,0 +1,1192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Locator Guard — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & tokens ──────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg0:   #0a0a0b;
+  --bg1:   #111114;
+  --bg2:   #18181d;
+  --bg3:   #1f1f26;
+  --bg4:   #26262f;
+  --line:  #2a2a35;
+  --line2: #35353f;
+
+  --tx0:  #f0eff5;
+  --tx1:  #b8b6c8;
+  --tx2:  #7a7890;
+  --tx3:  #4a4860;
+
+  --accent:  #7c6af7;
+  --accent2: #5a49d6;
+  --green:   #2dd98a;
+  --amber:   #f5a623;
+  --red:     #f04545;
+  --cyan:    #38d5f7;
+
+  --r4:  4px;
+  --r8:  8px;
+  --r12: 12px;
+
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Syne', sans-serif;
+
+  --transition: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html { background: var(--bg0); color: var(--tx0); font-family: var(--mono); font-size: 13px; line-height: 1.6; }
+body { min-height: 100vh; display: flex; }
+
+/* ── Scrollbar ───────────────────────────────────────────── */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 2px; }
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+#sidebar {
+  width: 220px;
+  min-width: 220px;
+  background: var(--bg1);
+  border-right: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.sidebar-logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid var(--line);
+}
+.sidebar-logo .wordmark {
+  font-family: var(--sans);
+  font-weight: 800;
+  font-size: 15px;
+  color: var(--tx0);
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.logo-icon {
+  width: 28px; height: 28px;
+  background: var(--accent);
+  border-radius: var(--r4);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.sidebar-logo .tagline {
+  font-size: 10px;
+  color: var(--tx3);
+  margin-top: 4px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.sidebar-section-label {
+  padding: 16px 20px 6px;
+  font-size: 10px;
+  color: var(--tx3);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 20px;
+  color: var(--tx2);
+  cursor: pointer;
+  transition: color var(--transition), background var(--transition);
+  font-size: 12px;
+  border-left: 2px solid transparent;
+  user-select: none;
+}
+.nav-item:hover { color: var(--tx0); background: var(--bg2); }
+.nav-item.active {
+  color: var(--accent);
+  border-left-color: var(--accent);
+  background: rgba(124, 106, 247, 0.08);
+}
+.nav-icon { width: 14px; text-align: center; font-size: 12px; }
+
+.sidebar-stats {
+  margin-top: auto;
+  padding: 16px 20px;
+  border-top: 1px solid var(--line);
+}
+.sidebar-stat { display: flex; justify-content: space-between; margin-bottom: 6px; }
+.sidebar-stat-label { color: var(--tx3); font-size: 11px; }
+.sidebar-stat-val { font-size: 11px; font-weight: 700; }
+
+/* ── Main content ────────────────────────────────────────── */
+#main {
+  flex: 1;
+  overflow-y: auto;
+  background: var(--bg0);
+}
+
+/* ── Topbar ──────────────────────────────────────────────── */
+#topbar {
+  padding: 14px 28px;
+  border-bottom: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--bg0);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+.topbar-title {
+  font-family: var(--sans);
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--tx0);
+}
+.topbar-actions { display: flex; gap: 8px; align-items: center; }
+
+.btn {
+  padding: 6px 14px;
+  border-radius: var(--r4);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--line2);
+  background: var(--bg2);
+  color: var(--tx1);
+  transition: all var(--transition);
+  display: flex; align-items: center; gap: 6px;
+}
+.btn:hover { background: var(--bg3); color: var(--tx0); border-color: var(--line2); }
+.btn-accent {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.btn-accent:hover { background: var(--accent2); border-color: var(--accent2); }
+
+/* ── Page views ──────────────────────────────────────────── */
+.view { display: none; padding: 24px 28px; }
+.view.active { display: block; }
+
+/* ── Overview stats ──────────────────────────────────────── */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 24px;
+}
+.stat-card {
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: var(--r8);
+  padding: 16px 18px;
+  position: relative;
+  overflow: hidden;
+}
+.stat-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+}
+.stat-card.green::before  { background: var(--green); }
+.stat-card.amber::before  { background: var(--amber); }
+.stat-card.red::before    { background: var(--red); }
+.stat-card.accent::before { background: var(--accent); }
+
+.stat-label {
+  font-size: 10px;
+  color: var(--tx3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 8px;
+}
+.stat-value {
+  font-family: var(--sans);
+  font-size: 28px;
+  font-weight: 800;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.stat-value.green  { color: var(--green); }
+.stat-value.amber  { color: var(--amber); }
+.stat-value.red    { color: var(--red); }
+.stat-value.accent { color: var(--accent); }
+.stat-sub {
+  font-size: 10px;
+  color: var(--tx3);
+}
+
+/* ── Section headers ─────────────────────────────────────── */
+.section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+.section-title {
+  font-family: var(--sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--tx1);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* ── Reports table ───────────────────────────────────────── */
+.reports-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+}
+.reports-table th {
+  text-align: left;
+  padding: 8px 14px;
+  font-size: 10px;
+  color: var(--tx3);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  border-bottom: 1px solid var(--line);
+  font-weight: 500;
+}
+.reports-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  color: var(--tx1);
+  vertical-align: middle;
+}
+.reports-table tr:hover td { background: var(--bg1); }
+.reports-table tr { cursor: pointer; }
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+.status-pill.clean   { background: rgba(45,217,138,0.12); color: var(--green); }
+.status-pill.warning { background: rgba(245,166,35,0.12); color: var(--amber); }
+.status-pill.error   { background: rgba(240,69,69,0.12);  color: var(--red); }
+
+.pill-dot { width: 5px; height: 5px; border-radius: 50%; background: currentColor; }
+
+.feature-name {
+  font-family: var(--sans);
+  font-weight: 600;
+  color: var(--tx0);
+  font-size: 13px;
+}
+.page-url { color: var(--tx3); font-size: 11px; margin-top: 2px; }
+
+.change-count {
+  font-weight: 700;
+  font-size: 13px;
+}
+.change-count.has-changes { color: var(--amber); }
+.change-count.no-changes  { color: var(--tx3); }
+
+code.inline {
+  background: var(--bg3);
+  padding: 2px 6px;
+  border-radius: var(--r4);
+  font-size: 11px;
+  color: var(--cyan);
+}
+
+/* ── Detail view ─────────────────────────────────────────── */
+#view-detail { display: none; }
+#view-detail.active { display: block; }
+
+.detail-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid var(--line);
+}
+.detail-title {
+  font-family: var(--sans);
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--tx0);
+}
+.detail-meta {
+  display: flex;
+  gap: 16px;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+.detail-meta-item {
+  font-size: 11px;
+  color: var(--tx3);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* ── Diff cards ──────────────────────────────────────────── */
+.diff-card {
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: var(--r8);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.diff-card-header {
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--line);
+  background: var(--bg2);
+}
+.diff-card-title {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tx0);
+}
+.confidence-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--tx2);
+}
+.confidence-bar {
+  width: 60px; height: 4px;
+  background: var(--bg4);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.confidence-fill {
+  height: 100%;
+  background: var(--green);
+  border-radius: 2px;
+  transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.diff-card-body { padding: 14px 16px; }
+
+.locator-changes { margin-bottom: 12px; }
+
+.locator-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+}
+.locator-row:last-child { border-bottom: none; }
+
+.severity-badge {
+  padding: 2px 6px;
+  border-radius: var(--r4);
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+.severity-badge.critical { background: rgba(240,69,69,0.18); color: var(--red); }
+.severity-badge.high     { background: rgba(245,166,35,0.18); color: var(--amber); }
+.severity-badge.medium   { background: rgba(56,213,247,0.12); color: var(--cyan); }
+.severity-badge.low      { background: var(--bg3); color: var(--tx3); }
+
+.locator-attr {
+  color: var(--tx2);
+  min-width: 100px;
+  flex-shrink: 0;
+  padding-top: 1px;
+}
+.locator-values { flex: 1; }
+.locator-prev {
+  font-family: var(--mono);
+  color: var(--red);
+  text-decoration: line-through;
+  opacity: 0.7;
+}
+.locator-arrow { color: var(--tx3); margin: 0 6px; }
+.locator-curr { font-family: var(--mono); color: var(--green); }
+
+/* ── Signals grid ────────────────────────────────────────── */
+.signals-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin-top: 12px;
+}
+.signal-item {
+  background: var(--bg2);
+  border: 1px solid var(--line);
+  border-radius: var(--r4);
+  padding: 8px;
+  text-align: center;
+}
+.signal-label { font-size: 9px; color: var(--tx3); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+.signal-score { font-family: var(--sans); font-size: 14px; font-weight: 700; }
+.signal-score.high   { color: var(--green); }
+.signal-score.medium { color: var(--amber); }
+.signal-score.low    { color: var(--red); }
+
+/* ── Suggestion box ──────────────────────────────────────── */
+.suggestion-box {
+  margin-top: 12px;
+  background: rgba(124, 106, 247, 0.07);
+  border: 1px solid rgba(124, 106, 247, 0.25);
+  border-radius: var(--r8);
+  padding: 10px 14px;
+}
+.suggestion-label {
+  font-size: 10px;
+  color: var(--accent);
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  margin-bottom: 6px;
+  font-weight: 700;
+}
+.suggestion-selector {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--tx0);
+  margin-bottom: 4px;
+}
+.suggestion-reason { font-size: 11px; color: var(--tx2); }
+
+/* ── Timeline bar (mini chart) ───────────────────────────── */
+.timeline {
+  display: flex;
+  gap: 4px;
+  align-items: flex-end;
+  height: 40px;
+  margin-bottom: 20px;
+}
+.timeline-bar {
+  flex: 1;
+  border-radius: 2px 2px 0 0;
+  min-height: 3px;
+  cursor: pointer;
+  transition: opacity var(--transition);
+}
+.timeline-bar:hover { opacity: 0.7; }
+.timeline-bar.green  { background: var(--green); }
+.timeline-bar.amber  { background: var(--amber); }
+.timeline-bar.red    { background: var(--red); }
+
+/* ── Empty state ─────────────────────────────────────────── */
+.empty-state {
+  text-align: center;
+  padding: 48px;
+  color: var(--tx3);
+}
+.empty-state .empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+.empty-state p { font-size: 12px; }
+
+/* ── Animations ──────────────────────────────────────────── */
+@keyframes fadeSlideIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.view.active { animation: fadeSlideIn 0.2s ease; }
+
+/* ── Filter bar ──────────────────────────────────────────── */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+.filter-btn {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  border: 1px solid var(--line2);
+  background: transparent;
+  color: var(--tx2);
+  cursor: pointer;
+  font-family: var(--mono);
+  transition: all var(--transition);
+}
+.filter-btn:hover { color: var(--tx0); border-color: var(--line2); }
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+.search-input {
+  background: var(--bg1);
+  border: 1px solid var(--line2);
+  border-radius: var(--r4);
+  padding: 6px 12px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--tx0);
+  outline: none;
+  width: 200px;
+  margin-left: auto;
+  transition: border-color var(--transition);
+}
+.search-input::placeholder { color: var(--tx3); }
+.search-input:focus { border-color: var(--accent); }
+
+/* ── Help / Docs view ────────────────────────────────────── */
+.docs-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.docs-card {
+  background: var(--bg1);
+  border: 1px solid var(--line);
+  border-radius: var(--r8);
+  padding: 18px;
+}
+.docs-card h3 { font-family: var(--sans); font-size: 13px; font-weight: 600; color: var(--tx0); margin-bottom: 8px; }
+.docs-card p  { font-size: 11px; color: var(--tx2); line-height: 1.7; margin-bottom: 10px; }
+pre {
+  background: var(--bg0);
+  border: 1px solid var(--line);
+  border-radius: var(--r4);
+  padding: 10px 12px;
+  font-size: 11px;
+  color: var(--cyan);
+  overflow-x: auto;
+  white-space: pre;
+}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ──────────────────────────────────────────── -->
+<aside id="sidebar">
+  <div class="sidebar-logo">
+    <div class="wordmark">
+      <div class="logo-icon">🛡</div>
+      Locator Guard
+    </div>
+    <div class="tagline">QA Automation Toolkit</div>
+  </div>
+
+  <div class="sidebar-section-label">Navigation</div>
+  <div class="nav-item active" data-view="overview" onclick="navigate('overview', this)">
+    <span class="nav-icon">◈</span> Overview
+  </div>
+  <div class="nav-item" data-view="reports" onclick="navigate('reports', this)">
+    <span class="nav-icon">◉</span> All Reports
+  </div>
+  <div class="nav-item" data-view="baselines" onclick="navigate('baselines', this)">
+    <span class="nav-icon">◎</span> Baselines
+  </div>
+  <div class="nav-item" data-view="docs" onclick="navigate('docs', this)">
+    <span class="nav-icon">◇</span> Integration Docs
+  </div>
+
+  <div class="sidebar-section-label">Filters</div>
+  <div class="nav-item" onclick="filterStatus('warning')">
+    <span class="nav-icon" style="color:var(--amber)">●</span> Warnings
+    <span id="count-warning" style="margin-left:auto;font-size:10px;color:var(--amber)"></span>
+  </div>
+  <div class="nav-item" onclick="filterStatus('error')">
+    <span class="nav-icon" style="color:var(--red)">●</span> Errors
+    <span id="count-error" style="margin-left:auto;font-size:10px;color:var(--red)"></span>
+  </div>
+  <div class="nav-item" onclick="filterStatus('clean')">
+    <span class="nav-icon" style="color:var(--green)">●</span> Clean
+    <span id="count-clean" style="margin-left:auto;font-size:10px;color:var(--green)"></span>
+  </div>
+
+  <div class="sidebar-stats">
+    <div class="sidebar-stat">
+      <span class="sidebar-stat-label">Last run</span>
+      <span class="sidebar-stat-val" id="last-run-time" style="color:var(--tx1)">—</span>
+    </div>
+    <div class="sidebar-stat">
+      <span class="sidebar-stat-label">Total runs</span>
+      <span class="sidebar-stat-val" id="total-runs" style="color:var(--accent)">—</span>
+    </div>
+  </div>
+</aside>
+
+<!-- ── MAIN ──────────────────────────────────────────────── -->
+<div id="main">
+
+  <!-- Topbar -->
+  <div id="topbar">
+    <div class="topbar-title" id="topbar-title">Overview</div>
+    <div class="topbar-actions">
+      <button class="btn" onclick="loadDemoData()">↻ Refresh</button>
+      <button class="btn btn-accent" onclick="navigate('docs', document.querySelector('[data-view=docs]'))">+ New Integration</button>
+    </div>
+  </div>
+
+  <!-- ── VIEW: OVERVIEW ────────────────────────────────── -->
+  <div class="view active" id="view-overview">
+
+    <div class="stats-grid">
+      <div class="stat-card accent">
+        <div class="stat-label">Total Reports</div>
+        <div class="stat-value accent" id="stat-total">—</div>
+        <div class="stat-sub">All time</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-label">Locator Changes</div>
+        <div class="stat-value amber" id="stat-changed">—</div>
+        <div class="stat-sub">Across all features</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-label">Critical Issues</div>
+        <div class="stat-value red" id="stat-critical">—</div>
+        <div class="stat-sub">Needs immediate action</div>
+      </div>
+      <div class="stat-card green">
+        <div class="stat-label">Clean Features</div>
+        <div class="stat-value green" id="stat-clean">—</div>
+        <div class="stat-sub">No changes detected</div>
+      </div>
+    </div>
+
+    <div class="section-head">
+      <div class="section-title">Run History</div>
+      <span style="font-size:10px;color:var(--tx3)">last 5 runs</span>
+    </div>
+    <div class="timeline" id="run-timeline"></div>
+
+    <div class="section-head">
+      <div class="section-title">Recent Reports</div>
+      <button class="btn" onclick="navigate('reports', document.querySelector('[data-view=reports]'))">View all →</button>
+    </div>
+    <table class="reports-table" id="recent-reports-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Status</th>
+          <th>Changes</th>
+          <th>Confidence</th>
+          <th>Run at</th>
+        </tr>
+      </thead>
+      <tbody id="recent-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- ── VIEW: ALL REPORTS ─────────────────────────────── -->
+  <div class="view" id="view-reports">
+    <div class="filter-bar">
+      <button class="filter-btn active" onclick="setFilter('all', this)">All</button>
+      <button class="filter-btn" onclick="setFilter('warning', this)">Warning</button>
+      <button class="filter-btn" onclick="setFilter('error', this)">Error</button>
+      <button class="filter-btn" onclick="setFilter('clean', this)">Clean</button>
+      <input class="search-input" type="text" placeholder="Search features..." id="search-input" oninput="renderReportsTable()">
+    </div>
+    <table class="reports-table" id="all-reports-table">
+      <thead>
+        <tr>
+          <th>Feature</th>
+          <th>Status</th>
+          <th>Changes</th>
+          <th>Added</th>
+          <th>Removed</th>
+          <th>Run at</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="all-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- ── VIEW: DETAIL ──────────────────────────────────── -->
+  <div class="view" id="view-detail">
+    <div class="detail-header">
+      <div>
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:6px;cursor:pointer" onclick="navigate('reports', document.querySelector('[data-view=reports]'))">← Back to reports</div>
+        <div class="detail-title" id="detail-title">—</div>
+        <div class="detail-meta" id="detail-meta"></div>
+      </div>
+      <div id="detail-status-pill"></div>
+    </div>
+    <div id="detail-body"></div>
+  </div>
+
+  <!-- ── VIEW: BASELINES ───────────────────────────────── -->
+  <div class="view" id="view-baselines">
+    <div class="section-head">
+      <div class="section-title">Stored Baselines</div>
+    </div>
+    <table class="reports-table">
+      <thead>
+        <tr><th>Feature</th><th>Page URL</th><th>Created</th><th>Status</th><th></th></tr>
+      </thead>
+      <tbody id="baselines-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- ── VIEW: DOCS ────────────────────────────────────── -->
+  <div class="view" id="view-docs">
+    <div class="docs-grid">
+      <div class="docs-card">
+        <h3>🎭 Playwright</h3>
+        <p>Add to your <code class="inline">fixtures.ts</code> and call <code class="inline">locatorGuard.check()</code> in any test.</p>
+        <pre>import { createGuardFixture }
+  from '@dom-locator-guard/playwright';
+
+export const test = createGuardFixture({
+  config: { outputFormats: ['html'] }
+});
+
+// In your test:
+await locatorGuard.check('login-page');</pre>
+      </div>
+      <div class="docs-card">
+        <h3>🌲 Cypress</h3>
+        <p>Register the plugin in <code class="inline">cypress.config.ts</code>, then use <code class="inline">cy.guardSnapshot()</code>.</p>
+        <pre>// cypress.config.ts
+import { locatorGuardPlugin }
+  from '@dom-locator-guard/cypress';
+
+setupNodeEvents(on, config) {
+  locatorGuardPlugin(on, config);
+}
+
+// In your test:
+cy.guardSnapshot('checkout');</pre>
+      </div>
+      <div class="docs-card">
+        <h3>🐍 Selenium (Python)</h3>
+        <p>Wrap your driver with <code class="inline">LocatorGuard</code> and call <code class="inline">guard.check()</code>.</p>
+        <pre>from locator_guard import LocatorGuard
+
+guard = LocatorGuard()
+driver.get("/login")
+report = guard.check(driver, "login")
+
+if report and report["changedCount"] > 0:
+  print("⚠ Locator changes detected")</pre>
+      </div>
+      <div class="docs-card">
+        <h3>⌨️ CLI</h3>
+        <p>Compare HTML files offline without a running browser.</p>
+        <pre># Save baseline
+locator-guard save-baseline \
+  --input ./login.html \
+  --feature "Login Page"
+
+# Compare against baseline
+locator-guard diff \
+  --feature "Login Page" \
+  --current ./login-new.html \
+  --format console,html</pre>
+      </div>
+      <div class="docs-card">
+        <h3>⚙️ GitHub Actions</h3>
+        <p>Auto-detect locator changes on every PR that modifies HTML or templates.</p>
+        <pre># .github/workflows/locator-guard.yml
+on:
+  pull_request:
+    paths: ['**/*.html']
+
+jobs:
+  locator-guard:
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx locator-guard diff \
+          --feature login \
+          --current ./login.html</pre>
+      </div>
+      <div class="docs-card">
+        <h3>🔧 Configuration</h3>
+        <p>Tune thresholds and tracked attributes via config.</p>
+        <pre>const config = {
+  // 0-1: how similar to be "same element"
+  similarityThreshold: 0.75,
+
+  // attributes to track
+  trackedAttributes: [
+    'id', 'dataTestId', 'dataCy',
+    'ariaLabel', 'role', 'class'
+  ],
+
+  // ignore dynamic sections
+  ignoreSelectors: ['.ad-unit'],
+
+  outputFormats: ['console', 'html'],
+};</pre>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /#main -->
+
+<script>
+// ── Data ──────────────────────────────────────────────────────────────────
+
+let reports = [];
+let activeFilter = 'all';
+
+// Embedded sample data (in production: fetch from API or read JSON files)
+const SAMPLE_DATA = [
+  {
+    runId: 'run-001', featureName: 'Login', pageUrl: '/login',
+    generatedAt: Date.now() - 3600000, status: 'warning',
+    totalElements: 24, changedCount: 1, addedCount: 0, removedCount: 0,
+    diffs: [{
+      elementLabel: '<button> "Login"', verdict: 'locator_changed',
+      confidenceScore: 92,
+      signals: { domPath: 1.0, textContent: 1.0, tagAndType: 1.0, visualPosition: 0.5, ariaRole: 1.0 },
+      locatorChanges: [{ attribute: 'id', previous: 'loginbtn', current: 'loginBtn', severity: 'high' }],
+      suggestedLocator: { selector: '[data-testid="login-button"]', reason: 'data-testid is the most stable locator' }
+    }]
+  },
+  {
+    runId: 'run-002', featureName: 'Checkout', pageUrl: '/checkout',
+    generatedAt: Date.now() - 7200000, status: 'error',
+    totalElements: 41, changedCount: 3, addedCount: 1, removedCount: 1,
+    diffs: [
+      {
+        elementLabel: '<button> "Place Order"', verdict: 'locator_changed', confidenceScore: 88,
+        signals: { domPath: 0.9, textContent: 1.0, tagAndType: 1.0, visualPosition: 0.85, ariaRole: 0 },
+        locatorChanges: [{ attribute: 'dataTestId', previous: 'place-order-btn', current: 'checkout-submit', severity: 'critical' }],
+        suggestedLocator: { selector: '[data-testid="checkout-submit"]', reason: 'Update to new data-testid' }
+      },
+      {
+        elementLabel: '<input> [placeholder="Card number"]', verdict: 'locator_changed', confidenceScore: 95,
+        signals: { domPath: 1.0, textContent: 0, tagAndType: 1.0, visualPosition: 0.9, ariaRole: 0 },
+        locatorChanges: [
+          { attribute: 'id', previous: 'card-number', current: 'cardNumber', severity: 'high' },
+          { attribute: 'name', previous: 'card_number', current: 'cardNumber', severity: 'high' }
+        ],
+        suggestedLocator: { selector: '[placeholder="Card number"]', reason: 'Placeholder is stable here' }
+      },
+      {
+        elementLabel: '<select> "Country"', verdict: 'locator_changed', confidenceScore: 79,
+        signals: { domPath: 0.8, textContent: 1.0, tagAndType: 1.0, visualPosition: 0.7, ariaRole: 0 },
+        locatorChanges: [{ attribute: 'class', previous: 'select-country', current: 'country-select form-select', severity: 'medium', removedValues: ['select-country'], addedValues: ['country-select','form-select'] }],
+        suggestedLocator: { selector: '[name="country"]', reason: 'name attribute is stable' }
+      }
+    ]
+  },
+  {
+    runId: 'run-003', featureName: 'Registration', pageUrl: '/register',
+    generatedAt: Date.now() - 10800000, status: 'clean',
+    totalElements: 18, changedCount: 0, addedCount: 0, removedCount: 0, diffs: []
+  },
+  {
+    runId: 'run-004', featureName: 'Dashboard', pageUrl: '/dashboard',
+    generatedAt: Date.now() - 14400000, status: 'warning',
+    totalElements: 67, changedCount: 2, addedCount: 3, removedCount: 0,
+    diffs: [
+      {
+        elementLabel: '<button> "Export"', verdict: 'locator_changed', confidenceScore: 84,
+        signals: { domPath: 0.85, textContent: 1.0, tagAndType: 1.0, visualPosition: 0.8, ariaRole: 0 },
+        locatorChanges: [{ attribute: 'id', previous: 'export-btn', current: 'btn-export-data', severity: 'high' }],
+        suggestedLocator: { selector: 'text="Export"', reason: 'Text is stable for this button' }
+      },
+      {
+        elementLabel: '<input> [placeholder="Search..."]', verdict: 'locator_changed', confidenceScore: 91,
+        signals: { domPath: 0.95, textContent: 0, tagAndType: 1.0, visualPosition: 0.9, ariaRole: 0 },
+        locatorChanges: [{ attribute: 'id', previous: 'search', current: 'global-search', severity: 'high' }],
+        suggestedLocator: { selector: '[placeholder="Search..."]', reason: 'Placeholder is stable here' }
+      }
+    ]
+  },
+  {
+    runId: 'run-005', featureName: 'Profile Settings', pageUrl: '/settings/profile',
+    generatedAt: Date.now() - 18000000, status: 'clean',
+    totalElements: 31, changedCount: 0, addedCount: 0, removedCount: 0, diffs: []
+  }
+];
+
+// ── Utils ─────────────────────────────────────────────────────────────────
+
+function relTime(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 60000) return 'just now';
+  if (diff < 3600000) return Math.floor(diff/60000) + 'm ago';
+  if (diff < 86400000) return Math.floor(diff/3600000) + 'h ago';
+  return Math.floor(diff/86400000) + 'd ago';
+}
+
+function statusPill(status) {
+  const map = { clean: '✓ Clean', warning: '⚠ Warning', error: '✗ Error' };
+  return `<span class="status-pill ${status}"><span class="pill-dot"></span>${map[status] || status}</span>`;
+}
+
+function avgConfidence(diffs) {
+  const changed = diffs.filter(d => d.verdict === 'locator_changed');
+  if (!changed.length) return null;
+  return Math.round(changed.reduce((s, d) => s + d.confidenceScore, 0) / changed.length);
+}
+
+function scoreClass(v) {
+  if (v >= 0.75) return 'high';
+  if (v >= 0.5) return 'medium';
+  return 'low';
+}
+
+// ── Navigation ────────────────────────────────────────────────────────────
+
+function navigate(viewId, navEl) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const view = document.getElementById('view-' + viewId);
+  if (view) view.classList.add('active');
+  if (navEl) navEl.classList.add('active');
+  const titles = { overview: 'Overview', reports: 'All Reports', detail: 'Report Detail', baselines: 'Baselines', docs: 'Integration Docs' };
+  document.getElementById('topbar-title').textContent = titles[viewId] || viewId;
+}
+
+// ── Load data ─────────────────────────────────────────────────────────────
+
+async function loadDemoData() {
+  // Try live API first (when served via node server.js)
+  try {
+    const res = await fetch('/api/reports');
+    if (res.ok) {
+      const live = await res.json();
+      reports = live.length > 0 ? live : SAMPLE_DATA;
+      const mode = live.length > 0 ? `live — ${live.length} report(s)` : 'sample data';
+      console.log(`[LocatorGuard] ${mode}`);
+      renderAll();
+      return;
+    }
+  } catch {
+    // Not running via server — use embedded sample data
+  }
+  reports = SAMPLE_DATA;
+  renderAll();
+}
+
+function renderAll() {
+  renderStats();
+  renderTimeline();
+  renderRecentTable();
+  renderReportsTable();
+  renderBaselinesTable();
+  renderSidebarCounts();
+}
+
+// ── Stats ─────────────────────────────────────────────────────────────────
+
+function renderStats() {
+  const total = reports.length;
+  const totalChanged = reports.reduce((s, r) => s + r.changedCount, 0);
+  const critical = reports.reduce((s, r) =>
+    s + r.diffs.filter(d => d.locatorChanges?.some(c => c.severity === 'critical')).length, 0);
+  const clean = reports.filter(r => r.status === 'clean').length;
+
+  document.getElementById('stat-total').textContent = total;
+  document.getElementById('stat-changed').textContent = totalChanged;
+  document.getElementById('stat-critical').textContent = critical;
+  document.getElementById('stat-clean').textContent = clean;
+
+  const last = reports[0];
+  document.getElementById('last-run-time').textContent = last ? relTime(last.generatedAt) : '—';
+  document.getElementById('total-runs').textContent = total;
+}
+
+// ── Timeline mini-chart ───────────────────────────────────────────────────
+
+function renderTimeline() {
+  const el = document.getElementById('run-timeline');
+  const maxChanges = Math.max(...reports.map(r => r.changedCount), 1);
+  el.innerHTML = reports.map(r => {
+    const h = Math.max(6, Math.round((r.changedCount / maxChanges) * 36));
+    const cls = r.status === 'error' ? 'red' : r.status === 'warning' ? 'amber' : 'green';
+    return `<div class="timeline-bar ${cls}" style="height:${h}px" title="${r.featureName}: ${r.changedCount} changes" onclick="openDetail('${r.runId}')"></div>`;
+  }).join('');
+}
+
+// ── Recent table ──────────────────────────────────────────────────────────
+
+function renderRecentTable() {
+  const tbody = document.getElementById('recent-tbody');
+  const recent = reports.slice(0, 4);
+  tbody.innerHTML = recent.map(r => {
+    const conf = avgConfidence(r.diffs);
+    return `<tr onclick="openDetail('${r.runId}')">
+      <td><div class="feature-name">${r.featureName}</div><div class="page-url">${r.pageUrl}</div></td>
+      <td>${statusPill(r.status)}</td>
+      <td><span class="change-count ${r.changedCount > 0 ? 'has-changes' : 'no-changes'}">${r.changedCount > 0 ? r.changedCount + ' changed' : '—'}</span></td>
+      <td>${conf ? `<span style="color:var(--green)">${conf}%</span>` : '<span style="color:var(--tx3)">—</span>'}</td>
+      <td style="color:var(--tx3)">${relTime(r.generatedAt)}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ── All reports table ─────────────────────────────────────────────────────
+
+function setFilter(f, el) {
+  activeFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  el.classList.add('active');
+  renderReportsTable();
+}
+
+function renderReportsTable() {
+  const tbody = document.getElementById('all-tbody');
+  const search = (document.getElementById('search-input')?.value || '').toLowerCase();
+  let filtered = reports;
+  if (activeFilter !== 'all') filtered = filtered.filter(r => r.status === activeFilter);
+  if (search) filtered = filtered.filter(r => r.featureName.toLowerCase().includes(search) || r.pageUrl.toLowerCase().includes(search));
+
+  if (!filtered.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">◎</div><p>No reports match this filter.</p></div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => `<tr onclick="openDetail('${r.runId}')">
+    <td><div class="feature-name">${r.featureName}</div><div class="page-url">${r.pageUrl}</div></td>
+    <td>${statusPill(r.status)}</td>
+    <td><span class="change-count ${r.changedCount > 0 ? 'has-changes' : 'no-changes'}">${r.changedCount}</span></td>
+    <td style="color:var(--tx3)">${r.addedCount}</td>
+    <td style="color:var(--tx3)">${r.removedCount}</td>
+    <td style="color:var(--tx3)">${relTime(r.generatedAt)}</td>
+    <td><button class="btn" style="padding:3px 8px;font-size:10px" onclick="event.stopPropagation();openDetail('${r.runId}')">View →</button></td>
+  </tr>`).join('');
+}
+
+// ── Baselines table ───────────────────────────────────────────────────────
+
+function renderBaselinesTable() {
+  const tbody = document.getElementById('baselines-tbody');
+  tbody.innerHTML = reports.map(r => `<tr>
+    <td><div class="feature-name">${r.featureName}</div></td>
+    <td><code class="inline">${r.pageUrl}</code></td>
+    <td style="color:var(--tx3)">${new Date(r.generatedAt - 86400000).toLocaleDateString()}</td>
+    <td>${statusPill(r.status)}</td>
+    <td><button class="btn" style="padding:3px 8px;font-size:10px">Update baseline</button></td>
+  </tr>`).join('');
+}
+
+// ── Sidebar counts ────────────────────────────────────────────────────────
+
+function renderSidebarCounts() {
+  const counts = { clean: 0, warning: 0, error: 0 };
+  reports.forEach(r => counts[r.status] = (counts[r.status] || 0) + 1);
+  document.getElementById('count-clean').textContent = counts.clean || '';
+  document.getElementById('count-warning').textContent = counts.warning || '';
+  document.getElementById('count-error').textContent = counts.error || '';
+}
+
+function filterStatus(status) {
+  navigate('reports', document.querySelector('[data-view=reports]'));
+  activeFilter = status;
+  document.querySelectorAll('.filter-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent.toLowerCase().includes(status));
+  });
+  renderReportsTable();
+}
+
+// ── Detail view ───────────────────────────────────────────────────────────
+
+function openDetail(runId) {
+  const r = reports.find(x => x.runId === runId);
+  if (!r) return;
+
+  document.getElementById('detail-title').textContent = r.featureName;
+  document.getElementById('detail-status-pill').innerHTML = statusPill(r.status);
+  document.getElementById('detail-meta').innerHTML = `
+    <span class="detail-meta-item">◉ ${r.pageUrl}</span>
+    <span class="detail-meta-item">◷ ${relTime(r.generatedAt)}</span>
+    <span class="detail-meta-item">◈ ${r.totalElements} elements scanned</span>
+    <span class="detail-meta-item" style="color:${r.changedCount > 0 ? 'var(--amber)' : 'var(--green)'}">
+      ${r.changedCount > 0 ? '⚠ ' + r.changedCount + ' locator change(s)' : '✓ All stable'}
+    </span>
+  `;
+
+  const changed = r.diffs.filter(d => d.verdict === 'locator_changed');
+
+  if (changed.length === 0) {
+    document.getElementById('detail-body').innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon" style="color:var(--green);opacity:1">✓</div>
+        <p style="color:var(--green);font-size:14px;font-family:var(--sans);font-weight:600">All locators stable</p>
+        <p style="margin-top:8px">No locator changes detected in this run.</p>
+      </div>`;
+  } else {
+    document.getElementById('detail-body').innerHTML = changed.map(d => buildDiffCard(d)).join('');
+    // Animate confidence bars after render
+    setTimeout(() => {
+      document.querySelectorAll('.confidence-fill').forEach(bar => {
+        bar.style.width = bar.dataset.w + '%';
+      });
+    }, 50);
+  }
+
+  navigate('detail', null);
+}
+
+function buildDiffCard(diff) {
+  const changesHTML = diff.locatorChanges.map(c => {
+    let valHTML;
+    if (c.attribute === 'class' && (c.removedValues || c.addedValues)) {
+      valHTML = `<span class="locator-prev">${(c.removedValues||[]).join(' ')}</span><span class="locator-arrow">→</span><span class="locator-curr">${(c.addedValues||[]).join(' ')}</span>`;
+    } else {
+      valHTML = `<span class="locator-prev">${c.previous || '(none)'}</span><span class="locator-arrow">→</span><span class="locator-curr">${c.current || '(none)'}</span>`;
+    }
+    return `<div class="locator-row">
+      <span class="severity-badge ${c.severity}">${c.severity}</span>
+      <span class="locator-attr">${c.attribute}</span>
+      <div class="locator-values">${valHTML}</div>
+    </div>`;
+  }).join('');
+
+  const sig = diff.signals;
+  const signalItems = [
+    ['DOM path', sig.domPath],
+    ['Text', sig.textContent],
+    ['Tag/type', sig.tagAndType],
+    ['Visual pos', sig.visualPosition],
+    ['ARIA role', sig.ariaRole],
+  ].map(([label, val]) => `<div class="signal-item">
+    <div class="signal-label">${label}</div>
+    <div class="signal-score ${scoreClass(val)}">${Math.round(val * 100)}%</div>
+  </div>`).join('');
+
+  const suggestion = diff.suggestedLocator ? `
+    <div class="suggestion-box">
+      <div class="suggestion-label">◈ Suggested locator</div>
+      <div class="suggestion-selector">${diff.suggestedLocator.selector}</div>
+      <div class="suggestion-reason">${diff.suggestedLocator.reason}</div>
+    </div>` : '';
+
+  return `<div class="diff-card">
+    <div class="diff-card-header">
+      <div class="diff-card-title">${diff.elementLabel}</div>
+      <div class="confidence-badge">
+        <div class="confidence-bar"><div class="confidence-fill" data-w="${diff.confidenceScore}" style="width:0%"></div></div>
+        ${diff.confidenceScore}% confidence
+      </div>
+    </div>
+    <div class="diff-card-body">
+      <div class="locator-changes">${changesHTML}</div>
+      <div class="signals-grid">${signalItems}</div>
+      ${suggestion}
+    </div>
+  </div>`;
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────
+loadDemoData();
+</script>
+</body>
+</html>
