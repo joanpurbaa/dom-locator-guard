@@ -102,9 +102,8 @@ function cmdCheck(file: string) {
 
 	console.log(formatConsole(report));
 
-	const slug = `${slugify(feat)}-${Date.now()}`;
-	const htmlPath = path.join(REPORTS_DIR, `${slug}.html`);
-	const jsonPath = path.join(REPORTS_DIR, `${slug}.json`);
+	const htmlPath = path.join(REPORTS_DIR, `${slugify(feat)}.html`);
+	const jsonPath = path.join(REPORTS_DIR, `${slugify(feat)}.json`);
 	fs.writeFileSync(htmlPath, formatHTML(report));
 	fs.writeFileSync(jsonPath, JSON.stringify(report, null, 2));
 
